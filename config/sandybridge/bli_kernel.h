@@ -71,14 +71,14 @@
 #define BLIS_DEFAULT_NR_C          4
 
 #define BLIS_ZGEMM_UKERNEL         bli_zgemm_asm_4x4
-#define BLIS_DEFAULT_MC_Z          64 
+#define BLIS_DEFAULT_MC_Z          64
 #define BLIS_DEFAULT_KC_Z          192
 #define BLIS_DEFAULT_NC_Z          4096
 #define BLIS_DEFAULT_MR_Z          4
 #define BLIS_DEFAULT_NR_Z          4
 
 
-
+#define BLIS_SIMD_ALIGN_SIZE 32
 
 // -- LEVEL-2 KERNEL CONSTANTS -------------------------------------------------
 
@@ -123,7 +123,7 @@
 // -- copyv --
 
 // -- dotv --
-
+#define BLIS_DDOTV_KERNEL bli_ddotv_opt_var1
 // -- dotxv --
 
 // -- invertv --
