@@ -38,3 +38,4 @@ bli_config.h
 # -- misc. --
 
 output.testsuite
+perftest/out/
