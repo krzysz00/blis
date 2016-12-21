@@ -122,4 +122,30 @@
 #define VGATHERPFDPD(LEVEL,ADDRESS) ASM(vgatherpf##LEVEL##dpd ADDRESS)
 #define VSCATTERPFDPD(LEVEL,ADDRESS) ASM(vscatterpf##LEVEL##dpd ADDRESS)
 
+#define ZERO(r) ASM(vxorpd r, r, r)
+
+#define DUFFJMP(nam, reg)\
+    LEAQ(DEREF_OFF(RIP, UNIQ(nam##jumptable)), VAR(jump_tmp1))\
+    ASM(movslq DEREF_ARR(VAR(jump_tmp1), reg, 4), VAR(jump_tmp2))\
+    LEAQ((VAR(jump_tmp2), VAR(jump_tmp1)), VAR(jump_tmp1))\
+    ASM(jmp *VAR(jump_tmp1))\
+
+#define JUMPTABLES()\
+    ".section .rodata.jumptables%=\n\t"
+
+#define END_JUMPTABLES()\
+    ".text\n\t"
+
+#define JUMPTABLE4(nam)\
+    ULABEL(nam##jumptable)\
+    ASM(.long UNIQ(nam##0) - UNIQ(nam##jumptable), UNIQ(nam##1) - UNIQ(nam##jumptable),\
+        UNIQ(nam##2) - UNIQ(nam##jumptable), UNIQ(nam##3) - UNIQ(nam##jumptable))
+
+#define JUMPTABLE8(nam)\
+    ULABEL(nam##jumptable)\
+    ASM(.long UNIQ(nam##0) - UNIQ(nam##jumptable), UNIQ(nam##1) - UNIQ(nam##jumptable),\
+        UNIQ(nam##2) - UNIQ(nam##jumptable), UNIQ(nam##3) - UNIQ(nam##jumptable),\
+        UNIQ(nam##4) - UNIQ(nam##jumptable), UNIQ(nam##5) - UNIQ(nam##jumptable),\
+        UNIQ(nam##6) - UNIQ(nam##jumptable), UNIQ(nam##7) - UNIQ(nam##jumptable))
+
 #endif

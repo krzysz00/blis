@@ -34,42 +34,17 @@
 #include "blis.h"
 #include "bli_asm_macros.h"
 
-#define ZEROYMM(r) ASM(vxorpd r, r, r)
-
 #define SCADOT(n, nam, rx, mx, my, rd)\
     ULABEL(nam##n)\
     VMOVS(mx, rx)\
     VMULADDS(my, rx, rd, rx)
 
-#define DUFFJMP(nam, reg)\
-    LEAQ(DEREF_OFF(RIP, UNIQ(nam##jumptable)), VAR(jump_tmp1))\
-    ASM(movslq DEREF_ARR(VAR(jump_tmp1), reg, 4), VAR(jump_tmp2))\
-    LEAQ((VAR(jump_tmp2), VAR(jump_tmp1)), VAR(jump_tmp1))\
-    ASM(jmp *VAR(jump_tmp1))\
-
-#define JUMPTABLES()\
-    ".section .rodata.jumptables%=\n\t"
-
-#define END_JUMPTABLES()\
-    ".text\n\t"
-
-#define JUMPTABLE4(nam)\
-    ULABEL(nam##jumptable)\
-    ASM(.long UNIQ(nam##0) - UNIQ(nam##jumptable), UNIQ(nam##1) - UNIQ(nam##jumptable),\
-        UNIQ(nam##2) - UNIQ(nam##jumptable), UNIQ(nam##3) - UNIQ(nam##jumptable))
-
-#define JUMPTABLE8(nam)\
-    ULABEL(nam##jumptable)\
-    ASM(.long UNIQ(nam##0) - UNIQ(nam##jumptable), UNIQ(nam##1) - UNIQ(nam##jumptable),\
-        UNIQ(nam##2) - UNIQ(nam##jumptable), UNIQ(nam##3) - UNIQ(nam##jumptable),\
-        UNIQ(nam##4) - UNIQ(nam##jumptable), UNIQ(nam##5) - UNIQ(nam##jumptable),\
-        UNIQ(nam##6) - UNIQ(nam##jumptable), UNIQ(nam##7) - UNIQ(nam##jumptable))
 
 // Compute a dot product in < 4 elements
 #define TAIL(name, xmr, ymr, n1t, n1, n2t, n2, n3t, n3, countr)\
-    ZEROYMM(YMM(n1))\
-    ZEROYMM(YMM(n2))\
-    ZEROYMM(YMM(n3))\
+    ZERO(XMM(n1))\
+    ZERO(XMM(n2))\
+    ZERO(XMM(n3))\
     DUFFJMP(name, countr)\
     SCADOT(3, name, XMM(n3t), DEREF_OFF(xmr, 16), DEREF_OFF(ymr, 16), XMM(n3))\
     SCADOT(2, name, XMM(n2t), DEREF_OFF(xmr, 8), DEREF_OFF(ymr, 8), XMM(n2))\

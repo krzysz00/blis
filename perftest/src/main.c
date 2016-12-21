@@ -10,6 +10,7 @@
     } while(0)
 
 PERF_FN_DECL(dotv)
+PERF_FN_DECL(addv)
 
 static const struct option long_options[] = {
     {.name = "minimum", .has_arg = required_argument, .flag = NULL, .val = 'm'},
@@ -72,5 +73,6 @@ int main(int argc, char **argv) {
     const perf_params_t params = {.min_n = min_n, .max_n = max_n, .inc_n = inc_n};
 
     TRY(dotv);
+    TRY(addv);
     return 0;
 }

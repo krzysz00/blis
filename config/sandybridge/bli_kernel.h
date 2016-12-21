@@ -117,7 +117,7 @@
 // -- LEVEL-1V KERNEL DEFINITIONS ----------------------------------------------
 
 // -- addv --
-
+#define BLIS_DADDV_KERNEL bli_daddv_opt_var1
 // -- axpyv --
 
 // -- copyv --
