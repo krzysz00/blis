@@ -119,7 +119,7 @@
 // -- addv --
 #define BLIS_DADDV_KERNEL bli_daddv_opt_var1
 // -- axpyv --
-
+#define BLIS_DAXPYV_KERNEL bli_daxpyv_opt_var1
 // -- copyv --
 
 // -- dotv --

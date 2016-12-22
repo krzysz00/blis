@@ -34,77 +34,100 @@
 #include "blis.h"
 #include "bli_asm_macros.h"
 
-#define SCAADD(n, nam, mx, my, r)\
+// *alpha is in YMM15
+#define GET_ALPHA(reg)\
+    MOVQ(VAR(alpha), VAR(jump_tmp1))\
+    VBROADCASTS(DEREF(VAR(jump_tmp1)), YMM(15))
+
+#define SCAAXPY(n, nam, mx, my, rt, r)\
     ULABEL(nam##n)\
     VMOVS(my, r)\
-    M_VADDS(mx, r)\
+    VMULS(mx, XMM(15), rt)\
+    R_VADDS(rt, r, r)\
     VMOVS(r, my)\
 
 
 // Compute a dot product in < 4 elements
-#define TAIL(name, xmr, ymr, n1, n2, n3, countr)\
+#define TAIL(name, xmr, ymr, n1t, n1, n2t, n2, n3t, n3, countr)\
     DUFFJMP(name, countr)\
-    SCAADD(3, name, DEREF_OFF(xmr, 16), DEREF_OFF(ymr, 16), XMM(n3))\
-    SCAADD(2, name, DEREF_OFF(xmr, 8), DEREF_OFF(ymr, 8), XMM(n2))\
-    SCAADD(1, name, DEREF(xmr), DEREF(ymr), XMM(n1))\
+    SCAAXPY(3, name, DEREF_OFF(xmr, 16), DEREF_OFF(ymr, 16), XMM(n3t), XMM(n3))\
+    SCAAXPY(2, name, DEREF_OFF(xmr, 8), DEREF_OFF(ymr, 8), XMM(n3t), XMM(n2))\
+    SCAAXPY(1, name, DEREF(xmr), DEREF(ymr), XMM(n1t), XMM(n1))\
     SHL(IMM(3), countr)\
     ADD(countr, xmr)\
     ADD(countr, ymr)\
     ULABEL(name##0)
 
-#define LOAD1 VMOVAP(DEREF_OFF(VAR(y), (0 * MAX_TAIL_SIZE * ELEM_SIZE)), YMM(0))
-#define LOAD2 LOAD1 VMOVAP(DEREF_OFF(VAR(y), (1 * MAX_TAIL_SIZE * ELEM_SIZE)), YMM(1))
-#define LOAD3 LOAD2 VMOVAP(DEREF_OFF(VAR(y), (2 * MAX_TAIL_SIZE * ELEM_SIZE)), YMM(2))
-#define LOAD4 LOAD3 VMOVAP(DEREF_OFF(VAR(y), (3 * MAX_TAIL_SIZE * ELEM_SIZE)), YMM(3))
-#define LOAD5 LOAD4 VMOVAP(DEREF_OFF(VAR(y), (4 * MAX_TAIL_SIZE * ELEM_SIZE)), YMM(4))
-#define LOAD6 LOAD5 VMOVAP(DEREF_OFF(VAR(y), (5 * MAX_TAIL_SIZE * ELEM_SIZE)), YMM(5))
-#define LOAD7 LOAD6 VMOVAP(DEREF_OFF(VAR(y), (6 * MAX_TAIL_SIZE * ELEM_SIZE)), YMM(6))
-#define LOAD8 LOAD7 VMOVAP(DEREF_OFF(VAR(y), (7 * MAX_TAIL_SIZE * ELEM_SIZE)), YMM(7))
-
-#define ADD1 R_VADDP(DEREF_OFF(VAR(x), (0 * MAX_TAIL_SIZE * ELEM_SIZE)), YMM(0), YMM(0))
-#define ADD2 ADD1 R_VADDP(DEREF_OFF(VAR(x), (1 * MAX_TAIL_SIZE * ELEM_SIZE)), YMM(1), YMM(1))
-#define ADD3 ADD2 R_VADDP(DEREF_OFF(VAR(x), (2 * MAX_TAIL_SIZE * ELEM_SIZE)), YMM(2), YMM(2))
-#define ADD4 ADD3 R_VADDP(DEREF_OFF(VAR(x), (3 * MAX_TAIL_SIZE * ELEM_SIZE)), YMM(3), YMM(3))
-#define ADD5 ADD4 R_VADDP(DEREF_OFF(VAR(x), (4 * MAX_TAIL_SIZE * ELEM_SIZE)), YMM(4), YMM(4))
-#define ADD6 ADD5 R_VADDP(DEREF_OFF(VAR(x), (5 * MAX_TAIL_SIZE * ELEM_SIZE)), YMM(5), YMM(5))
-#define ADD7 ADD6 R_VADDP(DEREF_OFF(VAR(x), (6 * MAX_TAIL_SIZE * ELEM_SIZE)), YMM(6), YMM(6))
-#define ADD8 ADD7 R_VADDP(DEREF_OFF(VAR(x), (7 * MAX_TAIL_SIZE * ELEM_SIZE)), YMM(7), YMM(7))
-
-#define STORE1 VMOVAP(YMM(0), DEREF_OFF(VAR(y), (0 * MAX_TAIL_SIZE * ELEM_SIZE)))
-#define STORE2 STORE1 VMOVAP(YMM(1), DEREF_OFF(VAR(y), (1 * MAX_TAIL_SIZE * ELEM_SIZE)))
-#define STORE3 STORE2 VMOVAP(YMM(2), DEREF_OFF(VAR(y), (2 * MAX_TAIL_SIZE * ELEM_SIZE)))
-#define STORE4 STORE3 VMOVAP(YMM(3), DEREF_OFF(VAR(y), (3 * MAX_TAIL_SIZE * ELEM_SIZE)))
-#define STORE5 STORE4 VMOVAP(YMM(4), DEREF_OFF(VAR(y), (4 * MAX_TAIL_SIZE * ELEM_SIZE)))
-#define STORE6 STORE5 VMOVAP(YMM(5), DEREF_OFF(VAR(y), (5 * MAX_TAIL_SIZE * ELEM_SIZE)))
-#define STORE7 STORE6 VMOVAP(YMM(6), DEREF_OFF(VAR(y), (6 * MAX_TAIL_SIZE * ELEM_SIZE)))
-#define STORE8 STORE7 VMOVAP(YMM(7), DEREF_OFF(VAR(y), (7 * MAX_TAIL_SIZE * ELEM_SIZE)))
-
 #define INDIRECT(name) name
 #define MACROCAT(a, b) INDIRECT(a##b)
 
-#define LOOP(n)\
-    ULABEL(addloop##n)\
+#define LOAD_BODY(prevn)\
+    VMOVAP(DEREF_OFF(VAR(y), (prevn * MAX_TAIL_SIZE * ELEM_SIZE)), YMM(prevn))
+
+#define LOAD0
+#define LOAD1 LOAD0 LOAD_BODY(0)
+#define LOAD2 LOAD1 LOAD_BODY(1)
+#define LOAD3 LOAD2 LOAD_BODY(2)
+#define LOAD4 LOAD3 LOAD_BODY(3)
+#define LOAD5 LOAD4 LOAD_BODY(4)
+#define LOAD6 LOAD5 LOAD_BODY(5)
+#define LOAD7 LOAD6 LOAD_BODY(6)
+#define LOAD8 LOAD7 LOAD_BODY(7)
+
+#define AXPY_BODY(prevn, xreg)\
+    VMULP(DEREF_OFF(VAR(x), (prevn * MAX_TAIL_SIZE * ELEM_SIZE)), YMM(15), YMM(xreg))\
+    R_VADDP(YMM(xreg), YMM(prevn), YMM(prevn))\
+
+#define AXPY0
+#define AXPY1 AXPY0 AXPY_BODY(0, 8)
+#define AXPY2 AXPY1 AXPY_BODY(1, 9)
+#define AXPY3 AXPY2 AXPY_BODY(2, 10)
+#define AXPY4 AXPY3 AXPY_BODY(3, 11)
+#define AXPY5 AXPY4 AXPY_BODY(4, 12)
+#define AXPY6 AXPY5 AXPY_BODY(5, 13)
+#define AXPY7 AXPY6 AXPY_BODY(6, 14)
+#define AXPY8 AXPY7 AXPY_BODY(7, 15)
+
+#define STORE_BODY(prevn)\
+    VMOVAP(YMM(prevn), DEREF_OFF(VAR(y), (prevn * MAX_TAIL_SIZE * ELEM_SIZE)))
+
+#define STORE0
+#define STORE1 STORE0 STORE_BODY(0)
+#define STORE2 STORE1 STORE_BODY(1)
+#define STORE3 STORE2 STORE_BODY(2)
+#define STORE4 STORE3 STORE_BODY(3)
+#define STORE5 STORE4 STORE_BODY(4)
+#define STORE6 STORE5 STORE_BODY(5)
+#define STORE7 STORE6 STORE_BODY(6)
+#define STORE8 STORE7 STORE_BODY(7)
+
+#define LOOP_NOLABEL(n)\
     MACROCAT(LOAD, n)\
-    MACROCAT(ADD, n)\
+    MACROCAT(AXPY, n)\
     MACROCAT(STORE, n)\
     ADD(IMM((n * MAX_TAIL_SIZE * ELEM_SIZE)), VAR(x))\
     ADD(IMM((n * MAX_TAIL_SIZE * ELEM_SIZE)), VAR(y))\
     SUB(IMM(n), VAR(iter))
 
+#define LOOP(n)\
+    ULABEL(axpyloop##n)\
+    LOOP_NOLABEL(n)
+
 #define SSETAIL(n)\
     LOOP(n)\
-    JMP(UNIQ(addloop0))\
+    JMP(UNIQ(axpyloop0))\
 
-#define UNROLL_SIZE 8
+#define UNROLL_SIZE 7
 #define ELEM_SIZE 8
 
 #define SSE(instr) instr##d
 #define MAX_TAIL_SIZE 4
 
-void bli_daddv_opt_var1
+void bli_daxpyv_opt_var1
      (
        conj_t conjx,
        dim_t n,
+       double* restrict alpha,
        double* restrict x, inc_t incx,
        double* restrict y, inc_t incy,
        cntx_t* cntx
@@ -151,10 +174,10 @@ void bli_daddv_opt_var1
     // Call the reference implementation if needed.
     if ( use_ref == TRUE )
     {
-        BLIS_DADDV_KERNEL_REF
+        BLIS_DAXPYV_KERNEL_REF
         (
           conjx,
-          n,
+          n, alpha,
           x, incx,
           y, incy,
           cntx
@@ -171,38 +194,42 @@ void bli_daddv_opt_var1
     // current loop has four pairs, repeated once
     __asm__ volatile
     (
+     GET_ALPHA()
      TEST(VAR(pre), VAR(pre))
-     JZ(UNIQ(preadd0))
-     TAIL(preadd, VAR(x), VAR(y), 2, 1, 0, VAR(pre))
+     JZ(UNIQ(preaxpy0))
+     TAIL(preaxpy, VAR(x), VAR(y), 10, 2, 9, 1, 8, 0, VAR(pre))
      ASM(vzeroall)
+     GET_ALPHA()
      ALIGN16
-     ULABEL(addloop_start)
+     ULABEL(axpyloop_start)
      TEST(VAR(iter), VAR(iter))
-     JLE(UNIQ(addloop0))
+     JLE(UNIQ(axpyloop0))
      CMP(IMM(UNROLL_SIZE), VAR(iter))
-     JL(UNIQ(addloop_tail))
-     LOOP(8)
-     JMP(UNIQ(addloop_start))
-     ULABEL(addloop_tail)
-     DUFFJMP(addloop, VAR(iter))
-     ULABEL(addloop0)
+     JL(UNIQ(axpyloop_tail))
+     LOOP(7)
+     CMP(IMM(UNROLL_SIZE), VAR(iter))
+     JL(UNIQ(axpyloop_tail))
+     LOOP_NOLABEL(7)
+     JMP(UNIQ(axpyloop_start))
+     ULABEL(axpyloop_tail)
+     DUFFJMP(axpyloop, VAR(iter))
+     ULABEL(axpyloop0)
      TEST(VAR(post), VAR(post))
-     JZ(UNIQ(add_end))
+     JZ(UNIQ(axpy_end))
      ZEROUPPER()
-     TAIL(postadd, VAR(x), VAR(y), 0, 1, 2, VAR(post))
-     JMP(UNIQ(add_end))
-     SSETAIL(7)
+     TAIL(postaxpy, VAR(x), VAR(y), 8, 0, 9, 1, 10, 2, VAR(post))
+     JMP(UNIQ(axpy_end))
      SSETAIL(6)
      SSETAIL(5)
      SSETAIL(4)
      SSETAIL(3)
      SSETAIL(2)
      SSETAIL(1)
-     ULABEL(add_end)
+     ULABEL(axpy_end)
      JUMPTABLES()
-     JUMPTABLE4(preadd)
-     JUMPTABLE8(addloop)
-     JUMPTABLE4(postadd)
+     JUMPTABLE4(preaxpy)
+     JUMPTABLE8(axpyloop)
+     JUMPTABLE4(postaxpy)
      END_JUMPTABLES()
      : [pre] "+r" (n_pre),
        [iter] "+r" (n_iter),
@@ -211,7 +238,7 @@ void bli_daddv_opt_var1
        [y] "+r" (y),
        [jump_tmp1] "=r" (jump_tmp1),
        [jump_tmp2] "=r" (jump_tmp2)
-     :
+     : [alpha] "m" (alpha)
      : "ymm0", "ymm1", "ymm2", "ymm3", "ymm4", "ymm5", "ymm6", "ymm7", "ymm8",
        "ymm9", "ymm10", "ymm11", "ymm12", "ymm13", "ymm14", "ymm15", "memory"
      );

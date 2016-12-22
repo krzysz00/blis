@@ -98,6 +98,7 @@
 
 #define VGATHERDP(_0, _1) ASM(SSE(vgatherdp) _0, _1)
 #define VSCATTERDPS(_0, _1) ASM(SSE(vscatterdp) _0, _1)
+#define VMULS(_0, _1, _2) ASM(SSE(vmuls) _0, _1, _2)
 #define VMULP(_0, _1, _2) ASM(SSE(vmulp) _0, _1, _2)
 #define VPMULL(_0, _1, _2) ASM(SSE(vpmull) _0, _1, _2)
 #define VPADDD(_0, _1, _2) ASM(SSE(vpadd) _0, _1, _2)
@@ -109,8 +110,7 @@
     ASM(SSE(vadds) _2, _tmp, _2)
 #define VMOVAP(_0, _1) ASM(SSE(vmovap) _0, _1)
 #define VMOVUP(_0, _1) ASM(SSE(vmovup) _0, _1)
-#define VBROADCASTS(_0, _1) ASM(SSE(vbroadcastss) _0, _1)
-#define VPBROADCASTD(_0, _1) ASM(vpbroadcastd _0, _1)
+#define VBROADCASTS(_0, _1) ASM(SSE(vbroadcasts) _0, _1)
 #define VHADDP(_0, _1, _2) ASM(SSE(vhaddp) _0, _1, _2)
 #define VEXTRACTHIGH(_0, _1) ASM(vextractf128 $1, _0, _1)
 
@@ -123,6 +123,7 @@
 #define VSCATTERPFDPD(LEVEL,ADDRESS) ASM(vscatterpf##LEVEL##dpd ADDRESS)
 
 #define ZERO(r) ASM(vxorpd r, r, r)
+#define ZEROUPPER() ASM(vzeroupper)
 
 #define DUFFJMP(nam, reg)\
     LEAQ(DEREF_OFF(RIP, UNIQ(nam##jumptable)), VAR(jump_tmp1))\
