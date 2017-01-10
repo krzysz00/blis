@@ -12,6 +12,7 @@
 PERF_FN_DECL(dotv)
 PERF_FN_DECL(addv)
 PERF_FN_DECL(axpyv)
+PERF_FN_DECL(dotxf)
 
 static const struct option long_options[] = {
     {.name = "minimum", .has_arg = required_argument, .flag = NULL, .val = 'm'},
@@ -76,5 +77,6 @@ int main(int argc, char **argv) {
     TRY(dotv);
     TRY(addv);
     TRY(axpyv);
+    TRY(dotxf);
     return 0;
 }

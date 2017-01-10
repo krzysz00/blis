@@ -27,6 +27,8 @@ typedef struct perf_params_t {
 #define PERF_FN(op_name, ...)\
     bool perf_##op_name (const perf_params_t *params)\
     {\
+        cntx_t cntx;\
+        bli_##op_name##_cntx_init(&cntx);\
         printf("Benchmarking " #op_name "\n");\
         dim_t min_sz = params->min_n;\
         dim_t max_sz = params->max_n;\
@@ -43,19 +45,21 @@ typedef struct perf_params_t {
             __VA_ARGS__\
         }\
         fclose(data_out);\
+        bli_##op_name##_cntx_finalize(&cntx);\
         return retval;\
     }
 
-#define FLOPS_INTO(perfvar, ...) do\
+#define FLOPS_INTO(scale, perfvar, ...) do\
         {\
             perfvar = DBL_MAX;\
             double _time = bli_clock();\
             __VA_ARGS__;\
             perfvar = bli_clock_min_diff(perfvar, _time);\
-            perfvar = ( 2.0 * i ) / perfvar / FLOPS_PER_UNIT_PERF;\
+            perfvar = ( 2.0 * i * scale ) / perfvar / FLOPS_PER_UNIT_PERF;\
         } while(0)
 
 #define REPORT(my_flops, their_flops) fprintf(data_out, "%ld,%.8e,%.8e\n", i, (my_flops), (their_flops))
+#define REPORT3(my_flops, their_flops, semi_flops) fprintf(data_out, "%ld,%.8e,%.8e,%.8e\n", i, (my_flops), (their_flops), (semi_flops))
 
 #define PERF_FN_DECL(op_name) bool perf_##op_name (const perf_params_t *params);
 
