@@ -10,11 +10,14 @@
 #define OUT_DIR_STR "out/"
 #define OUT_FILE_EXT ".dat"
 
-#define DEFAULT_MIN_N 10
-#define DEFAULT_MAX_N 200010
-#define DEFAULT_INC_N 100
+#define DEFAULT_MIN_N 4
+#define DEFAULT_MAX_N 2000
+#define DEFAULT_INC_N 4
 
 #define FLOPS_PER_UNIT_PERF 1e9
+
+extern void* memsimd(size_t size);
+
 typedef struct perf_params_t {
     dim_t min_n;
     dim_t max_n;
@@ -24,6 +27,7 @@ typedef struct perf_params_t {
 #define PERF_FN(op_name, ...)\
     bool perf_##op_name (const perf_params_t *params)\
     {\
+        printf("Benchmarking " #op_name "\n");\
         dim_t min_sz = params->min_n;\
         dim_t max_sz = params->max_n;\
         dim_t inc_sz = params->inc_n;\

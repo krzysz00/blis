@@ -4,10 +4,10 @@
 PERF_FN(dotv, double rho1 = -1;\
         double rho2 = -1;\
         double flops_me, flops_them;\
-        double* x1 = (double*)malloc(i * sizeof(double));\
-        double* y1 = (double*)malloc(i * sizeof(double));\
-        double* x2 = (double*)malloc(i * sizeof(double));\
-        double* y2 = (double*)malloc(i * sizeof(double));\
+        double* x1 = (double*)memsimd(i * sizeof(double));\
+        double* y1 = (double*)memsimd(i * sizeof(double));\
+        double* x2 = (double*)memsimd(i * sizeof(double));\
+        double* y2 = (double*)memsimd(i * sizeof(double));\
         bli_drandv(i, x1, 1, NULL);\
         memcpy(y1, x1, i * sizeof(double));\
         memcpy(x2, x1, i * sizeof(double));\
