@@ -108,7 +108,8 @@
 // -- axpyf --
 
 // -- dotxf --
-
+#define BLIS_DDOTXF_KERNEL bli_ddotxf_opt_6x4
+#define BLIS_DEFAULT_DF_D 6
 // -- dotxaxpyf --
 
 

@@ -77,6 +77,7 @@
 #define SAL1(_0) ASM(sal _0)
 #define SAR1(_0) ASM(sar _0)
 #define SHL(_0, _1) ASM(shl _0, _1)
+#define SHR(_0, _1) ASM(shr _0, _1)
 #define LEA(_0, _1) ASM(lea _0, _1)
 #define LEAQ(_0, _1) ASM(leaq _0, _1)
 #define TEST(_0, _1) ASM(test _0, _1)
@@ -122,14 +123,20 @@
 #define VGATHERPFDPD(LEVEL,ADDRESS) ASM(vgatherpf##LEVEL##dpd ADDRESS)
 #define VSCATTERPFDPD(LEVEL,ADDRESS) ASM(vscatterpf##LEVEL##dpd ADDRESS)
 
+#define VSHUFPD(s1, s2, d, mask) ASM(vshufpd IMM(mask), s1, s2, d)
+#define VPERM2F128(s1, s2, d, mask) ASM(vperm2f128 IMM(mask), s1, s2, d)
+
 #define ZERO(r) ASM(vxorpd r, r, r)
 #define ZEROUPPER() ASM(vzeroupper)
 
+#define DUFFJMP_GEN(nam, reg, tmp1, tmp2)\
+    LEAQ(DEREF_OFF(RIP, UNIQ(nam##jumptable)), tmp1)\
+    ASM(movslq DEREF_ARR(tmp1, reg, 4), tmp2)\
+    LEAQ((tmp2, tmp1), tmp1)\
+    ASM(jmp *tmp1)\
+
 #define DUFFJMP(nam, reg)\
-    LEAQ(DEREF_OFF(RIP, UNIQ(nam##jumptable)), VAR(jump_tmp1))\
-    ASM(movslq DEREF_ARR(VAR(jump_tmp1), reg, 4), VAR(jump_tmp2))\
-    LEAQ((VAR(jump_tmp2), VAR(jump_tmp1)), VAR(jump_tmp1))\
-    ASM(jmp *VAR(jump_tmp1))\
+    DUFFJMP_GEN(nam, reg, VAR(jump_tmp1), VAR(jump_tmp2))
 
 #define JUMPTABLES()\
     ".section .rodata.jumptables%=\n\t"
@@ -148,5 +155,15 @@
         UNIQ(nam##2) - UNIQ(nam##jumptable), UNIQ(nam##3) - UNIQ(nam##jumptable),\
         UNIQ(nam##4) - UNIQ(nam##jumptable), UNIQ(nam##5) - UNIQ(nam##jumptable),\
         UNIQ(nam##6) - UNIQ(nam##jumptable), UNIQ(nam##7) - UNIQ(nam##jumptable))
+
+#define VTRANSPOSED(r1, r2, r3, r4, t1, t2, t3, t4)\
+    VSHUFPD(r4, r3, t1, 0xf)\
+    VSHUFPD(r2, r1, t2, 0xf)\
+    VSHUFPD(r4, r3, t3, 0x0)\
+    VSHUFPD(r2, r1, t4, 0x0)\
+    VPERM2F128(t1, t2, r3, 0x20)\
+    VPERM2F128(t1, t2, r1, 0x31)\
+    VPERM2F128(t3, t4, r4, 0x20)\
+    VPERM2F128(t3, t4, r2, 0x31)
 
 #endif
