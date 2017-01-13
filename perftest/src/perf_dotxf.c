@@ -99,15 +99,15 @@ PERF_FN(dotxf, double flops_me, flops_them, flops_semi;\
         memcpy(y2, y1, BLIS_DEFAULT_DF_D * sizeof(double));\
         memcpy(x3, x2, i * sizeof(double));                 \
         memcpy(y3, y2, BLIS_DEFAULT_DF_D * sizeof(double));\
-        FLOPS_INTO(BLIS_DEFAULT_DF_D, flops_me,\
+        FLOPS_INTO(2 * BLIS_DEFAULT_DF_D, flops_me,\
                    BLIS_DDOTXF_KERNEL(BLIS_NO_CONJUGATE, BLIS_NO_CONJUGATE, \
                                       i, BLIS_DEFAULT_DF_D, &alpha,     \
                                       a1, 1, lda, x1, 1, &beta, y1, 1, &cntx);); \
-        FLOPS_INTO(BLIS_DEFAULT_DF_D, flops_them,\
+        FLOPS_INTO(2 * BLIS_DEFAULT_DF_D, flops_them,\
                    BLIS_DDOTXF_KERNEL_REF(BLIS_NO_CONJUGATE, BLIS_NO_CONJUGATE, \
                                           i, BLIS_DEFAULT_DF_D, &alpha, \
                                           a1, 1, lda, x1, 1, &beta, y1, 1, &cntx););\
-        FLOPS_INTO(BLIS_DEFAULT_DF_D, flops_semi,\
+        FLOPS_INTO(2 * BLIS_DEFAULT_DF_D, flops_semi,\
                    ddotxf_kernel_halfopt(BLIS_NO_CONJUGATE, BLIS_NO_CONJUGATE,\
                                          i, BLIS_DEFAULT_DF_D, &alpha,\
                                          a1, 1, lda, x1, 1, &beta, y1, 1, &cntx););\

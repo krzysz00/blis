@@ -55,7 +55,7 @@ typedef struct perf_params_t {
             double _time = bli_clock();\
             __VA_ARGS__;\
             perfvar = bli_clock_min_diff(perfvar, _time);\
-            perfvar = ( 2.0 * i * scale ) / perfvar / FLOPS_PER_UNIT_PERF;\
+            perfvar = ( i * scale ) / perfvar / FLOPS_PER_UNIT_PERF;\
         } while(0)
 
 #define REPORT(my_flops, their_flops) fprintf(data_out, "%ld,%.8e,%.8e\n", i, (my_flops), (their_flops))

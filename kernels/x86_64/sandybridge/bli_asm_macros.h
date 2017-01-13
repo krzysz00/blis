@@ -156,6 +156,12 @@
         UNIQ(nam##4) - UNIQ(nam##jumptable), UNIQ(nam##5) - UNIQ(nam##jumptable),\
         UNIQ(nam##6) - UNIQ(nam##jumptable), UNIQ(nam##7) - UNIQ(nam##jumptable))
 
+#define JUMPTABLE6(nam)\
+    ULABEL(nam##jumptable)\
+    ASM(.long UNIQ(nam##0) - UNIQ(nam##jumptable), UNIQ(nam##1) - UNIQ(nam##jumptable),\
+        UNIQ(nam##2) - UNIQ(nam##jumptable), UNIQ(nam##3) - UNIQ(nam##jumptable),\
+        UNIQ(nam##4) - UNIQ(nam##jumptable), UNIQ(nam##5) - UNIQ(nam##jumptable)) \
+
 #define VTRANSPOSED(r1, r2, r3, r4, t1, t2, t3, t4)\
     VSHUFPD(r4, r3, t1, 0xf)\
     VSHUFPD(r2, r1, t2, 0xf)\

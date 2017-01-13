@@ -106,7 +106,8 @@
 // -- dotaxpyv --
 
 // -- axpyf --
-
+#define BLIS_DAXPYF_KERNEL bli_daxpyf_opt_4x8
+#define BLIS_DEFAULT_AF_D 4
 // -- dotxf --
 #define BLIS_DDOTXF_KERNEL bli_ddotxf_opt_6x4
 #define BLIS_DEFAULT_DF_D 6
@@ -120,7 +121,7 @@
 // -- addv --
 #define BLIS_DADDV_KERNEL bli_daddv_opt_var1
 // -- axpyv --
-#define BLIS_DAXPYV_KERNEL bli_daxpyv_opt_var1
+#define BLIS_DAXPYV_KERNEL bli_daxpyv_opt_var2
 // -- copyv --
 
 // -- dotv --

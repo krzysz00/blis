@@ -12,10 +12,10 @@ PERF_FN(dotv, double rho1 = -1;\
         memcpy(y1, x1, i * sizeof(double));\
         memcpy(x2, x1, i * sizeof(double));\
         memcpy(y2, y1, i * sizeof(double));\
-        FLOPS_INTO(1, flops_me,\
+        FLOPS_INTO(2, flops_me,\
                    BLIS_DDOTV_KERNEL(BLIS_NO_CONJUGATE, BLIS_NO_CONJUGATE,\
                                      i, x1, 1, y1, 1, &rho1, &cntx););\
-        FLOPS_INTO(1, flops_them,\
+        FLOPS_INTO(2, flops_them,\
                    BLIS_DDOTV_KERNEL_REF(BLIS_NO_CONJUGATE, BLIS_NO_CONJUGATE,\
                                          i, x2, 1, y2, 1, &rho2, &cntx););\
         if (fabs(rho1 - rho2) > 1e-8) retval = false;\
